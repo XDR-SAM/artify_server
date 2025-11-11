@@ -205,6 +205,67 @@ async function run() {
 
 
 
+
+    
+
+    // Update artwork
+    app.put('/api/artworks/:id', verifyToken, async (req, res) => {
+      try {
+        const artworkId = req.params.id;
+        const userEmail = req.user.email;
+
+        // Check if artwork belongs to user
+        const artwork = await artworksCollection.findOne({ _id: new ObjectId(artworkId) });
+        if (!artwork) {
+          return res.status(404).json({ message: 'Artwork not found' });
+        }
+        if (artwork.userEmail !== userEmail) {
+          return res.status(403).json({ message: 'Unauthorized to update this artwork' });
+        }
+
+        const updateData = {
+          ...req.body,
+          updatedAt: new Date()
+        };
+        delete updateData._id;
+
+        const result = await artworksCollection.updateOne(
+          { _id: new ObjectId(artworkId) },
+          { $set: updateData }
+        );
+        res.json({ message: 'Artwork updated successfully', modifiedCount: result.modifiedCount });
+      } catch (error) {
+        res.status(500).json({ message: 'Error updating artwork', error: error.message });
+      }
+    });
+
+    // Delete artwork
+    app.delete('/api/artworks/:id', verifyToken, async (req, res) => {
+      try {
+        const artworkId = req.params.id;
+        const userEmail = req.user.email;
+
+        // Check if artwork belongs to user
+        const artwork = await artworksCollection.findOne({ _id: new ObjectId(artworkId) });
+        if (!artwork) {
+          return res.status(404).json({ message: 'Artwork not found' });
+        }
+        if (artwork.userEmail !== userEmail) {
+          return res.status(403).json({ message: 'Unauthorized to delete this artwork' });
+        }
+
+        const result = await artworksCollection.deleteOne({ _id: new ObjectId(artworkId) });
+        res.json({ message: 'Artwork deleted successfully', deletedCount: result.deletedCount });
+      } catch (error) {
+        res.status(500).json({ message: 'Error deleting artwork', error: error.message });
+      }
+    });
+
+
+
+
+
+
     // Root route
     app.get('/', (req, res) => {
       res.json({ message: 'Artify Server is running!' });
