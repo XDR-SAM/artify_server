@@ -60,6 +60,35 @@ async function run() {
     const usersCollection = db.collection('users');
 
 
+  
+    // ARTWORK ROUTES
+   
+
+    // Get all public artworks 
+    app.get('/api/artworks', async (req, res) => {
+      try {
+        const { search, category } = req.query;
+        let query = { visibility: 'Public' };
+
+        // Search by title or artist name
+        if (search) {
+          query.$or = [
+            { title: { $regex: search, $options: 'i' } },
+            { artistName: { $regex: search, $options: 'i' } }
+          ];
+        }
+
+        // Filter by category
+        if (category && category !== 'All') {
+          query.category = category;
+        }
+
+        const artworks = await artworksCollection.find(query).toArray();
+        res.json(artworks);
+      } catch (error) {
+        res.status(500).json({ message: 'Error fetching artworks', error: error.message });
+      }
+    });
 
 
     // Root route
