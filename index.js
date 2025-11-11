@@ -287,12 +287,69 @@ async function run() {
 
 
 
-
-
-
+    // FAVORITES ROUTES
+    
 
 
     
+    // Get user's favorites
+    app.get('/api/favorites', verifyToken, async (req, res) => {
+      try {
+        const userEmail = req.user.email;
+        const favorites = await favoritesCollection.find({ userEmail }).toArray();
+        
+        // Get full artwork details
+        const artworkIds = favorites.map(fav => new ObjectId(fav.artworkId));
+        const artworks = await artworksCollection.find({ _id: { $in: artworkIds } }).toArray();
+        
+        res.json(artworks);
+      } catch (error) {
+        res.status(500).json({ message: 'Error fetching favorites', error: error.message });
+      }
+    });
+
+    // Add to favorites
+    app.post('/api/favorites', verifyToken, async (req, res) => {
+      try {
+        const { artworkId } = req.body;
+        const userEmail = req.user.email;
+
+        // Check if already favorited
+        const existing = await favoritesCollection.findOne({ userEmail, artworkId });
+        if (existing) {
+          return res.status(400).json({ message: 'Already in favorites' });
+        }
+
+        const result = await favoritesCollection.insertOne({
+          userEmail,
+          artworkId,
+          createdAt: new Date()
+        });
+        res.status(201).json({ message: 'Added to favorites successfully' });
+      } catch (error) {
+        res.status(500).json({ message: 'Error adding to favorites', error: error.message });
+      }
+    });
+
+    // Remove from favorites
+    app.delete('/api/favorites/:artworkId', verifyToken, async (req, res) => {
+      try {
+        const { artworkId } = req.params;
+        const userEmail = req.user.email;
+
+        const result = await favoritesCollection.deleteOne({ userEmail, artworkId });
+        res.json({ message: 'Removed from favorites successfully', deletedCount: result.deletedCount });
+      } catch (error) {
+        res.status(500).json({ message: 'Error removing from favorites', error: error.message });
+      }
+    });
+
+
+
+
+
+
+
 
     // Root route
     app.get('/', (req, res) => {
