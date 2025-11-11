@@ -12,6 +12,18 @@ app.use(cors());
 app.use(express.json());
 
 
+// Firebase Admin SDK Init
+const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT 
+  ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+  : require('./artify-66e1e-firebase-adminsdk-fbsvc-94d7c40be6.json');
+
+// Initialize Firebase admin only once
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+}
+
 // MongoDB connection
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri, {
