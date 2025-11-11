@@ -206,7 +206,7 @@ async function run() {
 
 
 
-    
+
 
     // Update artwork
     app.put('/api/artworks/:id', verifyToken, async (req, res) => {
@@ -263,8 +263,36 @@ async function run() {
 
 
 
+        // Like/Unlike artwork
+    app.patch('/api/artworks/:id/like', verifyToken, async (req, res) => {
+      try {
+        const artworkId = req.params.id;
+        const { action } = req.body; // 'like' or 'unlike'
+
+        const increment = action === 'like' ? 1 : -1;
+        const result = await artworksCollection.updateOne(
+          { _id: new ObjectId(artworkId) },
+          { $inc: { likes: increment } }
+        );
+
+        const updatedArtwork = await artworksCollection.findOne({ _id: new ObjectId(artworkId) });
+        res.json({ message: 'Like updated successfully', likes: updatedArtwork.likes });
+      } catch (error) {
+        res.status(500).json({ message: 'Error updating likes', error: error.message });
+      }
+    });
 
 
+
+
+
+
+
+
+
+
+
+    
 
     // Root route
     app.get('/', (req, res) => {
