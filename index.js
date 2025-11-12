@@ -291,7 +291,7 @@ async function run() {
     
 
 
-    
+
     // Get user's favorites
     app.get('/api/favorites', verifyToken, async (req, res) => {
       try {
@@ -344,6 +344,35 @@ async function run() {
       }
     });
 
+
+  
+
+
+
+    
+    // USER ROUTES
+    
+
+    // Get artist info
+    app.get('/api/artists/:email', async (req, res) => {
+      try {
+        const email = req.params.email;
+        const artworks = await artworksCollection.find({ userEmail: email }).toArray();
+        const totalArtworks = artworks.length;
+        
+        // Get user info from first artwork or create basic info
+        const artistInfo = {
+          email,
+          name: artworks[0]?.artistName || 'Unknown Artist',
+          photoURL: artworks[0]?.artistPhoto || '',
+          totalArtworks
+        };
+        
+        res.json(artistInfo);
+      } catch (error) {
+        res.status(500).json({ message: 'Error fetching artist info', error: error.message });
+      }
+    });
 
 
 
