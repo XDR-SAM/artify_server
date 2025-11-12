@@ -16,3 +16,5 @@ A robust Express.js backend server for the Artify platform, providing RESTful AP
 
 • **Vercel-Ready Deployment**: Optimized for serverless deployment on Vercel with conditional server initialization, supporting both local development and cloud hosting environments
 
+Enjoy
+
