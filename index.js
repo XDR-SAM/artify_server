@@ -466,3 +466,24 @@ app.get('/api/dashboard/stats', verifyToken, async (req, res) => {
     res.status(500).json({ message: 'Error fetching dashboard stats', error: error.message });
   }
 });
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({ message: 'Artify Server is running!' });
+});
+
+// Health check route
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Export the Express app for Vercel
+module.exports = app;
+
+// For local development , , vercel optimize on upper section ,
+if (require.main === module) {
+  const port = process.env.PORT || 5000;
+  app.listen(port, () => {
+    console.log(`Artify server is running on port ${port}`);
+  });
+}
