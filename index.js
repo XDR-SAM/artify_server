@@ -17,7 +17,7 @@ app.use(cors());
 app.use(express.json());
 
 // Firebase Admin SDK init
-const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT 
+const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
   ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
   : require('./artify-66e1e-firebase-adminsdk-fbsvc-94d7c40be6.json');
 
@@ -93,7 +93,7 @@ app.get('/api/artworks', async (req, res) => {
   try {
     const database = await connectDB();
     const artworksCollection = database.collection('artworks');
-    
+
     const { search, category } = req.query;
     let query = { visibility: 'Public' };
 
@@ -122,11 +122,11 @@ app.get('/api/artworks/featured', async (req, res) => {
   try {
     const database = await connectDB();
     const artworksCollection = database.collection('artworks');
-    
+
     const artworks = await artworksCollection
       .find({ visibility: 'Public' })
       .sort({ createdAt: -1 })
-      .limit(6)
+      .limit(8)
       .toArray();
     res.json(artworks);
   } catch (error) {
@@ -139,7 +139,7 @@ app.get('/api/artworks/:id', verifyToken, async (req, res) => {
   try {
     const database = await connectDB();
     const artworksCollection = database.collection('artworks');
-    
+
     const artwork = await artworksCollection.findOne({ _id: new ObjectId(req.params.id) });
     if (!artwork) {
       return res.status(404).json({ message: 'Artwork not found' });
@@ -155,7 +155,7 @@ app.get('/api/my-artworks', verifyToken, async (req, res) => {
   try {
     const database = await connectDB();
     const artworksCollection = database.collection('artworks');
-    
+
     const userEmail = req.user.email;
     const artworks = await artworksCollection.find({ userEmail }).toArray();
     res.json(artworks);
@@ -169,7 +169,7 @@ app.post('/api/artworks', verifyToken, async (req, res) => {
   try {
     const database = await connectDB();
     const artworksCollection = database.collection('artworks');
-    
+
     const newArtwork = {
       ...req.body,
       userEmail: req.user.email,
@@ -189,7 +189,7 @@ app.put('/api/artworks/:id', verifyToken, async (req, res) => {
   try {
     const database = await connectDB();
     const artworksCollection = database.collection('artworks');
-    
+
     const artworkId = req.params.id;
     const userEmail = req.user.email;
 
@@ -223,7 +223,7 @@ app.delete('/api/artworks/:id', verifyToken, async (req, res) => {
   try {
     const database = await connectDB();
     const artworksCollection = database.collection('artworks');
-    
+
     const artworkId = req.params.id;
     const userEmail = req.user.email;
 
@@ -248,7 +248,7 @@ app.patch('/api/artworks/:id/like', verifyToken, async (req, res) => {
   try {
     const database = await connectDB();
     const artworksCollection = database.collection('artworks');
-    
+
     const artworkId = req.params.id;
     const { action } = req.body; // 'like' or 'unlike'
 
@@ -296,14 +296,14 @@ app.get('/api/favorites', verifyToken, async (req, res) => {
     const database = await connectDB();
     const favoritesCollection = database.collection('favorites');
     const artworksCollection = database.collection('artworks');
-    
+
     const userEmail = req.user.email;
     const favorites = await favoritesCollection.find({ userEmail }).toArray();
-    
+
     // Get full artwork details
     const artworkIds = favorites.map(fav => new ObjectId(fav.artworkId));
     const artworks = await artworksCollection.find({ _id: { $in: artworkIds } }).toArray();
-    
+
     res.json(artworks);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching favorites', error: error.message });
@@ -315,7 +315,7 @@ app.post('/api/favorites', verifyToken, async (req, res) => {
   try {
     const database = await connectDB();
     const favoritesCollection = database.collection('favorites');
-    
+
     const { artworkId } = req.body;
     const userEmail = req.user.email;
 
@@ -341,7 +341,7 @@ app.delete('/api/favorites/:artworkId', verifyToken, async (req, res) => {
   try {
     const database = await connectDB();
     const favoritesCollection = database.collection('favorites');
-    
+
     const { artworkId } = req.params;
     const userEmail = req.user.email;
 
@@ -390,11 +390,11 @@ app.get('/api/artists/:email', async (req, res) => {
   try {
     const database = await connectDB();
     const artworksCollection = database.collection('artworks');
-    
+
     const email = req.params.email;
     const artworks = await artworksCollection.find({ userEmail: email }).toArray();
     const totalArtworks = artworks.length;
-    
+
     // Get user info from first artwork or create basic info
     const artistInfo = {
       email,
@@ -402,7 +402,7 @@ app.get('/api/artists/:email', async (req, res) => {
       photoURL: artworks[0]?.artistPhoto || '',
       totalArtworks
     };
-    
+
     res.json(artistInfo);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching artist info', error: error.message });
