@@ -134,8 +134,8 @@ app.get('/api/artworks/featured', async (req, res) => {
   }
 });
 
-// Get single artwork by id
-app.get('/api/artworks/:id', verifyToken, async (req, res) => {
+// Get single artwork by id (PUBLIC - no authentication required)
+app.get('/api/artworks/:id', async (req, res) => {
   try {
     const database = await connectDB();
     const artworksCollection = database.collection('artworks');
