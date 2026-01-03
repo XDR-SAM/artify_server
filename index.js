@@ -409,23 +409,60 @@ app.get('/api/artists/:email', async (req, res) => {
   }
 });
 
-// Root route
-app.get('/', (req, res) => {
-  res.json({ message: 'Artify Server is running!' });
+// Dashboard Stats Endpoint
+app.get('/api/dashboard/stats', verifyToken, async (req, res) => {
+  try {
+    const database = await connectDB();
+    const artworksCollection = database.collection('artworks');
+    const userEmail = req.user.email;
+
+    // 1. Get Summary Stats
+    const userArtworks = await artworksCollection.find({ userEmail }).toArray();
+    const totalArtworks = userArtworks.length;
+    const totalLikes = userArtworks.reduce((sum, art) => sum + (art.likes || 0), 0);
+    const publicArtworks = userArtworks.filter(art => art.visibility === 'Public').length;
+    const privateArtworks = userArtworks.filter(art => art.visibility !== 'Public').length;
+
+    // 2. Data for Charts 
+
+    // Distribution Pie Chart
+    const pieChartData = [
+      { name: 'Public', value: publicArtworks, fill: '#0088FE' },
+      { name: 'Private', value: privateArtworks, fill: '#FFBB28' }
+    ];
+
+    // Likes over time (simplified - using created date) - Bar Chart
+    // Group by category for another chart
+    const categoryStats = userArtworks.reduce((acc, art) => {
+      acc[art.category] = (acc[art.category] || 0) + 1;
+      return acc;
+    }, {});
+
+    const barChartData = Object.keys(categoryStats).map(key => ({
+      name: key,
+      value: categoryStats[key]
+    }));
+
+    // Recent activity (last 5 artworks)
+    const recentArtworks = userArtworks
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 5);
+
+    res.json({
+      summary: {
+        totalArtworks,
+        totalLikes,
+        publicArtworks,
+        privateArtworks
+      },
+      charts: {
+        pie: pieChartData,
+        bar: barChartData
+      },
+      recent: recentArtworks
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching dashboard stats', error: error.message });
+  }
 });
-
-// Health check route
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
-// Export the Express app for Vercel
-module.exports = app;
-
-// For local development , , vercel optimize on upper section ,
-if (require.main === module) {
-  const port = process.env.PORT || 5000;
-  app.listen(port, () => {
-    console.log(`Artify server is running on port ${port}`);
-  });
-}
